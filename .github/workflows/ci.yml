@@ -128,6 +128,30 @@ jobs:
               python -m pip install build
               python -m build
             fi
+
+            if [[ -f Dockerfile ]]; then
+              docker build --tag kim-holiday-draft-api:ci .
+              container_id="$(docker run --detach --publish 8080:8080 kim-holiday-draft-api:ci)"
+              cleanup() { docker rm --force "$container_id" >/dev/null; }
+              trap cleanup EXIT
+              for attempt in {1..20}; do
+                if curl --fail --silent http://127.0.0.1:8080/health >/tmp/health.json; then
+                  break
+                fi
+                sleep 1
+              done
+              grep -Fq '{"status": "ok"}' /tmp/health.json
+              curl --fail --silent --header 'Content-Type: application/json' \
+                --data '{"topic":"questions to ask before planning"}' \
+                http://127.0.0.1:8080/draft >/tmp/draft.json
+              python - <<'PY'
+              import json
+              draft = json.load(open("/tmp/draft.json"))
+              assert draft["status"] == "draft"
+              assert draft["approval_required"] is True
+              assert draft["review"]["anti_slop"] == "passed"
+              PY
+            fi
           fi
 
           if [[ "$found_project" == false ]]; then
