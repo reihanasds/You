@@ -98,14 +98,7 @@ jobs:
             fi
 
             python -m compileall -q src tests
-            python - <<'PY'
-            import json
-            from pathlib import Path
-
-            for path in Path(".").rglob("*.json"):
-                if ".git" not in path.parts:
-                    json.loads(path.read_text())
-            PY
+            python -c 'import json; from pathlib import Path; [json.loads(path.read_text()) for path in Path(".").rglob("*.json") if ".git" not in path.parts]'
 
             if [[ -f pyproject.toml ]] &&
               grep -qE '^\[tool\.(ruff|flake8)(\.|])' pyproject.toml; then
@@ -144,13 +137,7 @@ jobs:
               curl --fail --silent --header 'Content-Type: application/json' \
                 --data '{"topic":"questions to ask before planning"}' \
                 http://127.0.0.1:8080/draft >/tmp/draft.json
-              python - <<'PY'
-              import json
-              draft = json.load(open("/tmp/draft.json"))
-              assert draft["status"] == "draft"
-              assert draft["approval_required"] is True
-              assert draft["review"]["anti_slop"] == "passed"
-              PY
+              python -c 'import json; draft=json.load(open("/tmp/draft.json")); assert draft["status"] == "draft" and draft["approval_required"] is True and draft["review"]["anti_slop"] == "passed"'
             fi
           fi
 
