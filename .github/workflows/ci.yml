@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Test and build validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Validate supported projects
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          found_project=false
+
+          run_node_script() {
+            local script="$1"
+            if ! node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['$script'] ? 0 : 1)"; then
+              return 0
+            fi
+
+            case "$package_manager" in
+              pnpm) run_command=(pnpm run "$script") ;;
+              yarn) run_command=(yarn run "$script") ;;
+              bun) run_command=(bun run "$script") ;;
+              npm) run_command=(npm run "$script") ;;
+            esac
+            echo "::group::${run_command[*]}"
+            "${run_command[@]}"
+            echo "::endgroup::"
+          }
+
+          if [[ -f package.json ]]; then
+            found_project=true
+            echo "Node.js project detected (package.json)."
+            package_manager=npm
+
+            if [[ -f pnpm-lock.yaml ]]; then
+              corepack enable
+              pnpm install --frozen-lockfile
+              package_manager=pnpm
+            elif [[ -f yarn.lock ]]; then
+              corepack enable
+              yarn install --immutable
+              package_manager=yarn
+            elif [[ -f bun.lockb || -f bun.lock ]]; then
+              bun install --frozen-lockfile
+              package_manager=bun
+            elif [[ -f package-lock.json || -f npm-shrinkwrap.json ]]; then
+              npm ci
+              package_manager=npm
+            else
+              npm install
+              package_manager=npm
+            fi
+
+            echo "Installed dependencies with $package_manager."
+            run_node_script lint
+            run_node_script typecheck
+            run_node_script type-check
+            run_node_script test
+            run_node_script build
+          fi
+
+          if [[ -f pyproject.toml || -f requirements.txt ]]; then
+            found_project=true
+            echo "Python project detected."
+
+            python -m pip install --upgrade pip
+            if [[ -f requirements.txt ]]; then
+              python -m pip install -r requirements.txt
+            fi
+            if [[ -f pyproject.toml ]]; then
+              # Install src-layout projects so tests exercise the packaged import path.
+              python -m pip install -e .
+            fi
+
+            python -m compileall -q src tests
+            python -c 'import json; from pathlib import Path; [json.loads(path.read_text()) for path in Path(".").rglob("*.json") if ".git" not in path.parts]'
+
+            if [[ -f pyproject.toml ]] &&
+              grep -qE '^\[tool\.(ruff|flake8)(\.|])' pyproject.toml; then
+              python -m ruff check .
+            elif [[ -f setup.cfg ]] && grep -qE '^\[flake8\]' setup.cfg; then
+              python -m flake8 .
+            fi
+
+            if [[ -f pyproject.toml ]] && grep -qE '^\[tool\.mypy\]' pyproject.toml; then
+              python -m mypy .
+            fi
+
+            if [[ -f pytest.ini || -f tox.ini || -d tests ]] ||
+              ([[ -f setup.cfg ]] && grep -qE '^\[tool:pytest\]' setup.cfg) ||
+              ([[ -f pyproject.toml ]] && grep -qE '^\[tool\.pytest(\.ini_options)?\]' pyproject.toml); then
+              python -m pip install pytest
+              python -m pytest
+            fi
+
+            if [[ -f pyproject.toml ]] && grep -qE '^\[build-system\]' pyproject.toml; then
+              python -m pip install build
+              python -m build
+            fi
+
+            if [[ -f Dockerfile ]]; then
+              docker build --tag kim-holiday-draft-api:ci .
+              container_id="$(docker run --detach --publish 8080:8080 kim-holiday-draft-api:ci)"
+              cleanup() { docker rm --force "$container_id" >/dev/null; }
+              trap cleanup EXIT
+              for attempt in {1..20}; do
+                if curl --fail --silent http://127.0.0.1:8080/health >/tmp/health.json; then
+                  break
+                fi
+                sleep 1
+              done
+              grep -Fq '{"status": "ok"}' /tmp/health.json
+              curl --fail --silent --header 'Content-Type: application/json' \
+                --data '{"topic":"questions to ask before planning"}' \
+                http://127.0.0.1:8080/draft >/tmp/draft.json
+              python -c 'import json; draft=json.load(open("/tmp/draft.json")); assert draft["status"] == "draft" and draft["approval_required"] is True and draft["review"]["anti_slop"] == "passed"'
+            fi
+          fi
+
+          if [[ "$found_project" == false ]]; then
+            echo "::notice::No supported project manifest found; nothing to validate."
+          else
+            echo "Supported project validation completed."
+          fi

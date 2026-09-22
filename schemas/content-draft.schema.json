@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kim Holiday approval-gated content draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "approval_required", "channel", "topic", "angle", "caption", "cta", "hashtags", "evidence", "review"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "draft"},
+    "approval_required": {"const": true},
+    "channel": {"const": "Instagram"},
+    "topic": {"type": "string", "minLength": 1},
+    "angle": {"type": "string", "minLength": 1},
+    "caption": {"type": "string", "minLength": 1},
+    "cta": {"type": "string", "minLength": 1},
+    "hashtags": {"type": "array", "items": {"type": "string"}},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["brand_guardian", "anti_slop"],
+      "properties": {
+        "brand_guardian": {"const": "passed"},
+        "anti_slop": {"const": "passed"}
+      }
+    }
+  }
+}

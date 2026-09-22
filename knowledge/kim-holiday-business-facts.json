@@ -1,0 +1,32 @@
+{
+  "business_name": {
+    "value": "Kim Holiday",
+    "evidence": "user-provided",
+    "allowed_use": "May name the business."
+  },
+  "primary_channel": {
+    "value": "Instagram",
+    "evidence": "request",
+    "allowed_use": "May format a draft for Instagram."
+  },
+  "offer": {
+    "value": null,
+    "evidence": "unknown",
+    "allowed_use": "Do not describe an offer until verified."
+  },
+  "price": {
+    "value": null,
+    "evidence": "unknown",
+    "allowed_use": "Never invent or imply a price."
+  },
+  "availability": {
+    "value": null,
+    "evidence": "unknown",
+    "allowed_use": "Never claim availability, scarcity, or capacity."
+  },
+  "testimonials": {
+    "value": [],
+    "evidence": "none-provided",
+    "allowed_use": "Never invent social proof."
+  }
+}
