@@ -3,7 +3,7 @@
   "title": "Kim Holiday approval-gated content draft",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "status", "approval_required", "channel", "topic", "angle", "caption", "cta", "hashtags", "evidence", "review"],
+  "required": ["schema_version", "status", "approval_required", "channel", "topic", "angle", "caption", "cta", "hashtags", "evidence", "visual_direction", "review"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "status": {"const": "draft"},
@@ -15,6 +15,7 @@
     "cta": {"type": "string", "minLength": 1},
     "hashtags": {"type": "array", "items": {"type": "string"}},
     "evidence": {"type": "array", "items": {"type": "string"}},
+    "visual_direction": {"type": "string", "minLength": 1},
     "review": {
       "type": "object",
       "additionalProperties": false,

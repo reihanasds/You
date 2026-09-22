@@ -44,21 +44,22 @@ class ContentDraftPipeline:
         return {"topic": topic.strip(), "channel": "Instagram"}
 
     def _strategy(self, context: dict[str, str]) -> dict[str, str]:
-        self.provider.generate("content strategist", "Create one useful, evidence-grounded post angle.")
+        self.provider.generate("content strategist", "Buat satu sudut konten yang berguna dan berbasis bukti.")
         return {
             **context,
-            "angle": "Invite questions about Kim Holiday's current offering without inventing details.",
+            "angle": "Ajak audiens mengajukan pertanyaan tentang penawaran Kim Holiday saat ini tanpa mengarang detail.",
         }
 
     def _curator(self, strategy: dict[str, str]) -> dict[str, str]:
-        self.provider.generate("Instagram curator", "Shape a concise caption and saveable prompt.")
+        self.provider.generate("Instagram curator", "Susun caption singkat dan ajakan yang bermanfaat untuk disimpan.")
         return {
             **strategy,
             "caption": (
-                "Planning something special? Kim Holiday can help you start with the right questions. "
-                "Send a DM with what you are considering, and ask about the current offering, timing, and next steps."
+                "Sedang merencanakan sesuatu yang istimewa? Kim Holiday dapat membantu Anda memulai dengan pertanyaan yang tepat. "
+                "Kirim DM tentang hal yang sedang Anda pertimbangkan, lalu tanyakan penawaran, waktu, dan langkah berikutnya yang dapat dibahas."
             ),
-            "cta": "DM Kim Holiday with your question.",
+            "cta": "Kirim DM ke Kim Holiday dengan pertanyaan Anda.",
+            "visual_direction": "Gunakan visual sederhana dan hangat yang menampilkan ruang untuk pertanyaan, tanpa klaim hasil atau ketersediaan.",
         }
 
     def _brand_guard(self, content: dict[str, str], strategy: dict[str, str]) -> dict[str, Any]:
@@ -74,6 +75,10 @@ class ContentDraftPipeline:
             "cta": content["cta"],
             "hashtags": ["#KimHoliday"],
             "evidence": ["business_name:user-provided", "channel:request"],
+            "visual_direction": content.get(
+                "visual_direction",
+                "Gunakan visual sederhana dan hangat tanpa klaim hasil atau ketersediaan.",
+            ),
             "review": {"brand_guardian": "passed", "anti_slop": "pending"},
         }
 
@@ -82,10 +87,10 @@ class ContentDraftPipeline:
         text = f"{draft['caption']} {draft['cta']}".lower()
         forbidden = (
             r"\$\s?\d",
-            r"\b(?:today|tomorrow|this week|limited|only \d+)\b",
-            r"\b(?:available|sold out|fully booked)\b",
-            r"\b(?:guarantee|guaranteed|best|#1|award-winning)\b",
-            r"\b(?:testimonial|client said|customers? love)\b",
+            r"\b(?:today|tomorrow|this week|limited|only \d+|hari ini|besok|minggu ini|terbatas|hanya \d+)\b",
+            r"\b(?:available|sold out|fully booked|tersedia|habis terjual|penuh)\b",
+            r"\b(?:guarantee|guaranteed|best|#1|award-winning|jaminan|terbaik|pemenang penghargaan)\b",
+            r"\b(?:testimonial|client said|customers? love|testimoni|kata klien|pelanggan menyukai)\b",
         )
         if any(re.search(pattern, text) for pattern in forbidden):
             raise DraftRejected("Draft contains an unsupported price, availability, superiority, or testimonial claim.")
@@ -95,7 +100,7 @@ class ContentDraftPipeline:
 
     def _validate(self, draft: dict[str, Any]) -> None:
         required = {"schema_version", "status", "approval_required", "channel", "topic", "angle",
-                    "caption", "cta", "hashtags", "evidence", "review"}
+                    "caption", "cta", "hashtags", "evidence", "visual_direction", "review"}
         if set(draft) != required:
             raise DraftRejected("Draft does not match the required output shape.")
         if draft["status"] != "draft" or draft["approval_required"] is not True:
