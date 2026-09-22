@@ -25,3 +25,14 @@ docker run --rm -p 8080:8080 kim-holiday-draft-api
 ```
 
 See [workflows/content-draft.md](workflows/content-draft.md) for the workflow and [CI.md](CI.md) for repository validation.
+
+## Three-day draft trial
+
+GitHub Actions can run the deterministic agent once per day for three UTC calendar days. It only uploads a JSON draft artifact; it never publishes or deploys.
+
+1. Open **Actions → Kim Holiday 3-day draft trial → Run workflow**, optionally set `start_date` (`YYYY-MM-DD`), and run it once.
+2. Monitor the workflow runs and each generated artifact in the workflow’s run summary. Scheduled runs occur at 00:15 UTC.
+3. Download artifacts named `kim-holiday-draft-day-<day>-<run-id>` from each successful run.
+4. Stop early by disabling the workflow in the Actions UI, or remove the schedule after the trial. Runs outside the three-day window exit with a notice.
+
+Each artifact includes `run_metadata`, evidence labels, `approval_required: true`, and `publication: "disabled"`. Human approval is still required and no auto-publish path exists.
