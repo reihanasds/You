@@ -1,6 +1,6 @@
-# Kim Holiday marketing-agent vertical slice
+# Irisan vertikal agen pemasaran Kim Holiday
 
-This repository contains a local, draft-only marketing pipeline for Kim Holiday. It follows a specialist-agent shape—**orchestrator → content strategist → Instagram curator → brand guardian → anti-slop reviewer → validated JSON draft**—without requiring an API key.
+Repositori ini berisi pipeline pemasaran lokal khusus draf untuk Kim Holiday. Alurnya mengikuti pola agen spesialis—**orchestrator → content strategist → Instagram curator → brand guardian → anti-slop reviewer → draf JSON tervalidasi**—tanpa memerlukan API key. Teks yang dihasilkan untuk pengguna ditulis dalam Bahasa Indonesia.
 
 ```bash
 PYTHONPATH=src python -m kim_holiday "questions to ask before planning"
@@ -8,11 +8,11 @@ PYTHONPATH=src python -m unittest discover -s tests
 PYTHONPATH=src python -m kim_holiday.api
 ```
 
-The deterministic provider is the testable default. A future LLM adapter can implement `ContentProvider` in `src/kim_holiday/provider.py`, while the evidence ledger in `knowledge/kim-holiday-business-facts.json` remains the source of truth. Unknown price, availability, capacity, and testimonials are never filled in. Every output is `status: "draft"` with `approval_required: true`; nothing is published.
+Penyedia deterministik adalah default yang dapat diuji. Adapter LLM di masa depan dapat mengimplementasikan `ContentProvider` di `src/kim_holiday/provider.py`, sementara ledger bukti di `knowledge/kim-holiday-business-facts.json` tetap menjadi sumber kebenaran. Harga, ketersediaan, kapasitas, dan testimoni yang belum diketahui tidak pernah diisi. Setiap keluaran berstatus `draft` dengan `approval_required: true`; tidak ada yang dipublikasikan.
 
-## Draft API
+## API draf
 
-The local API listens on port 8080 and exposes `GET /health` and `POST /draft`. The draft endpoint accepts `{"topic":"..."}` and returns validated JSON.
+API lokal berjalan pada port 8080 dan menyediakan `GET /health` serta `POST /draft`. Endpoint draf menerima `{"topic":"..."}` dan mengembalikan JSON tervalidasi.
 
 ```bash
 PYTHONPATH=src python -m kim_holiday.api
@@ -26,13 +26,13 @@ docker run --rm -p 8080:8080 kim-holiday-draft-api
 
 See [workflows/content-draft.md](workflows/content-draft.md) for the workflow and [CI.md](CI.md) for repository validation.
 
-## Three-day draft trial
+## Uji coba draf tiga hari
 
-GitHub Actions can run the deterministic agent once per day for three UTC calendar days. It only uploads a JSON draft artifact; it never publishes or deploys.
+GitHub Actions dapat menjalankan agen deterministik sekali sehari selama tiga hari kalender UTC. Workflow hanya mengunggah artefak draf JSON; tidak pernah mempublikasikan atau melakukan deployment.
 
-1. Open **Actions → Kim Holiday 3-day draft trial → Run workflow**, optionally set `start_date` (`YYYY-MM-DD`), and run it once.
-2. Monitor the workflow runs and each generated artifact in the workflow’s run summary. Scheduled runs occur at 00:15 UTC.
-3. Download artifacts named `kim-holiday-draft-day-<day>-<run-id>` from each successful run.
-4. Stop early by disabling the workflow in the Actions UI, or remove the schedule after the trial. Runs outside the three-day window exit with a notice.
+1. Buka **Actions → Kim Holiday 3-day draft trial → Run workflow**, atur `start_date` (`YYYY-MM-DD`) bila perlu, lalu jalankan sekali.
+2. Pantau run workflow dan artefak yang dibuat pada ringkasan run. Run terjadwal berlangsung pukul 00:15 UTC.
+3. Unduh artefak bernama `kim-holiday-draft-day-<day>-<run-id>` dari setiap run yang berhasil.
+4. Hentikan lebih awal dengan menonaktifkan workflow di UI Actions, atau hapus jadwal setelah uji coba. Run di luar jendela tiga hari akan berhenti dengan notifikasi.
 
-Each artifact includes `run_metadata`, evidence labels, `approval_required: true`, and `publication: "disabled"`. Human approval is still required and no auto-publish path exists.
+Setiap artefak berisi `run_metadata`, label bukti, `approval_required: true`, dan `publication: "dinonaktifkan"`. Persetujuan manusia tetap wajib dan tidak ada jalur auto-publish.

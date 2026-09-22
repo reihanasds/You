@@ -39,6 +39,7 @@ class DraftAPITests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(payload["approval_required"])
         self.assertEqual(payload["status"], "draft")
+        self.assertIn("Kirim DM", payload["caption"])
 
     def test_invalid_request_is_a_clear_400(self):
         status, payload = self.request("POST", "/draft", {"topic": 123})
